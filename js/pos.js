@@ -11,19 +11,14 @@ let products = [];
 
 // DOM Elements
 const elements = {
-    menuToggle: document.getElementById('menuToggle'),
-    sidebar: document.getElementById('sidebar'),
-    scannerBox: document.getElementById('scannerBox'),
-    scannerPlaceholder: document.getElementById('scannerPlaceholder'),
-    toggleScannerBtn: document.getElementById('toggleScannerBtn'),
     barcodeInput: document.getElementById('barcodeInput'),
     searchBtn: document.getElementById('searchBtn'),
     productGrid: document.getElementById('productGrid'),
-    categoryFilter: document.getElementById('categoryFilter'),
+    categoryTabs: document.getElementById('categoryTabs'),
     cartItems: document.getElementById('cartItems'),
-    cartEmpty: document.getElementById('cartEmpty'),
     cartCount: document.getElementById('cartCount'),
     cartTotal: document.getElementById('cartTotal'),
+    cartSheet: document.getElementById('cartSheet'),
     clearCartBtn: document.getElementById('clearCartBtn'),
     checkoutBtn: document.getElementById('checkoutBtn'),
     receiptModal: document.getElementById('receiptModal'),
@@ -31,10 +26,13 @@ const elements = {
     closeReceiptBtn: document.getElementById('closeReceiptBtn'),
     printReceiptBtn: document.getElementById('printReceiptBtn'),
     newOrderBtn: document.getElementById('newOrderBtn'),
-    backupBtn: document.getElementById('backupBtn'),
     todayStats: document.getElementById('todayStats'),
     todayRevenue: document.getElementById('todayRevenue'),
-    toastContainer: document.getElementById('toastContainer')
+    orderCount: document.getElementById('orderCount'),
+    toastContainer: document.getElementById('toastContainer'),
+    scannerModal: document.getElementById('scannerModal'),
+    fabCamera: document.getElementById('fabCamera'),
+    closeScannerBtn: document.getElementById('closeScannerBtn')
 };
 
 // ==================== INITIALIZATION ====================
@@ -55,23 +53,6 @@ async function init() {
 }
 
 function setupEventListeners() {
-    // Mobile menu
-    elements.menuToggle?.addEventListener('click', () => {
-        elements.sidebar.classList.toggle('open');
-    });
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 &&
-            !elements.sidebar.contains(e.target) &&
-            !elements.menuToggle.contains(e.target)) {
-            elements.sidebar.classList.remove('open');
-        }
-    });
-
-    // Scanner toggle
-    elements.toggleScannerBtn?.addEventListener('click', toggleScanner);
-
     // Barcode input
     elements.barcodeInput?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -82,9 +63,6 @@ function setupEventListeners() {
     elements.searchBtn?.addEventListener('click', () => {
         handleBarcodeSearch(elements.barcodeInput.value.trim());
     });
-
-    // Category filter
-    elements.categoryFilter?.addEventListener('change', filterProducts);
 
     // Cart actions
     elements.clearCartBtn?.addEventListener('click', clearCart);
@@ -97,9 +75,6 @@ function setupEventListeners() {
     });
     elements.printReceiptBtn?.addEventListener('click', printReceipt);
     elements.newOrderBtn?.addEventListener('click', startNewOrder);
-
-    // Backup
-    elements.backupBtn?.addEventListener('click', backupData);
 }
 
 // ==================== BARCODE SCANNER ====================
@@ -114,33 +89,30 @@ async function toggleScanner() {
 
 async function startScanner() {
     try {
-        elements.scannerPlaceholder.classList.add('hidden');
-        elements.scannerBox.classList.add('active');
-
         scanner = new Html5Qrcode("scanner");
 
         await scanner.start(
             { facingMode: "environment" },
             {
                 fps: 10,
-                qrbox: { width: 250, height: 100 },
-                aspectRatio: 1.7777778
+                qrbox: { width: 250, height: 150 },
+                aspectRatio: 1
             },
             onScanSuccess,
             onScanError
         );
 
         isScanning = true;
-        elements.toggleScannerBtn.innerHTML = '<i class="fas fa-stop"></i> Tắt Camera';
-        elements.toggleScannerBtn.classList.remove('btn-primary');
-        elements.toggleScannerBtn.classList.add('btn-danger');
-
+        if (elements.fabCamera) {
+            elements.fabCamera.classList.add('active');
+        }
         showToast('Camera đã bật', 'success');
     } catch (error) {
         console.error('Scanner error:', error);
         showToast('Không thể bật camera: ' + error.message, 'error');
-        elements.scannerPlaceholder.classList.remove('hidden');
-        elements.scannerBox.classList.remove('active');
+        if (elements.scannerModal) {
+            elements.scannerModal.classList.remove('active');
+        }
     }
 }
 
@@ -155,11 +127,12 @@ async function stopScanner() {
     }
 
     isScanning = false;
-    elements.toggleScannerBtn.innerHTML = '<i class="fas fa-camera"></i> Bật Camera';
-    elements.toggleScannerBtn.classList.add('btn-primary');
-    elements.toggleScannerBtn.classList.remove('btn-danger');
-    elements.scannerPlaceholder.classList.remove('hidden');
-    elements.scannerBox.classList.remove('active');
+    if (elements.fabCamera) {
+        elements.fabCamera.classList.remove('active');
+    }
+    if (elements.scannerModal) {
+        elements.scannerModal.classList.remove('active');
+    }
 }
 
 function onScanSuccess(decodedText) {
@@ -245,39 +218,40 @@ async function loadProducts() {
 async function loadCategories() {
     const categories = await db.getAllCategories();
 
-    elements.categoryFilter.innerHTML = '<option value="">Tất cả</option>';
-    categories.forEach(cat => {
-        elements.categoryFilter.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
-    });
+    if (elements.categoryTabs) {
+        let tabsHtml = '<button class="category-tab active" data-category="">Tất cả</button>';
+        categories.forEach(cat => {
+            tabsHtml += `<button class="category-tab" data-category="${cat.name}">${cat.name}</button>`;
+        });
+        elements.categoryTabs.innerHTML = tabsHtml;
+    }
 }
 
 function renderProducts(productList) {
     if (productList.length === 0) {
         elements.productGrid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-products">
                 <i class="fas fa-box-open"></i>
-                <h3>Chưa có sản phẩm</h3>
-                <p>Thêm sản phẩm trong mục <a href="products.html">Sản phẩm</a></p>
+                <p>Chưa có sản phẩm</p>
+                <a href="products.html" class="btn btn-primary">Thêm sản phẩm</a>
             </div>
         `;
         return;
     }
 
     elements.productGrid.innerHTML = productList.map(product => `
-        <div class="product-card" data-id="${product.id}" onclick="addToCartById('${product.id}')">
-            <div class="product-card-name" title="${product.name}">${product.name}</div>
-            <div class="product-card-price">${formatCurrency(product.price)}</div>
+        <div class="product-item" data-id="${product.id}" onclick="addToCartById('${product.id}')">
+            <div class="product-item-name" title="${product.name}">${product.name}</div>
+            <div class="product-item-price">${formatCurrency(product.price)}</div>
             ${product.stock !== undefined && product.stock <= 5 ?
-            `<span class="badge badge-warning" style="font-size: 0.65rem;">Còn ${product.stock}</span>` :
-            ''
+            `<div class="product-item-stock low">Còn ${product.stock}</div>` :
+            (product.stock !== undefined ? `<div class="product-item-stock">Kho: ${product.stock}</div>` : '')
         }
         </div>
     `).join('');
 }
 
-function filterProducts() {
-    const category = elements.categoryFilter.value;
-
+function filterProducts(category) {
     if (category) {
         const filtered = products.filter(p => p.category === category);
         renderProducts(filtered);
@@ -822,8 +796,12 @@ window.cancelOrder = cancelOrder;
 async function updateTodayStats() {
     const stats = await db.getTodayStats();
 
-    elements.todayStats.querySelector('div:first-child div:first-child').textContent = stats.orderCount;
-    elements.todayRevenue.textContent = formatCurrency(stats.totalRevenue);
+    if (elements.orderCount) {
+        elements.orderCount.textContent = stats.orderCount;
+    }
+    if (elements.todayRevenue) {
+        elements.todayRevenue.textContent = formatCurrency(stats.totalRevenue);
+    }
 }
 
 // ==================== BACKUP ====================

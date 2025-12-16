@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS - Bán hàng | Pet Store</title>
     <meta name="description" content="Hệ thống bán hàng cho cửa hàng thú cưng">
-    <meta name="theme-color" content="#6366f1">
+    <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -26,167 +26,610 @@
     <!-- Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-    <!-- Styles -->
+    <!-- Base Styles -->
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Mobile POS Styles -->
+    <style>
+        /* Mobile-First POS Layout */
+        .mobile-pos {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+            background: var(--bg-dark);
+        }
+
+        /* Header */
+        .pos-header {
+            background: var(--bg-card);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pos-header h1 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .pos-stats {
+            display: flex;
+            gap: 1.25rem;
+            font-size: 0.875rem;
+        }
+
+        .pos-stat {
+            text-align: center;
+        }
+
+        .pos-stat-value {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--primary);
+        }
+
+        .pos-stat-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Search Bar */
+        .pos-search {
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .search-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-wrapper .form-control {
+            flex: 1;
+            min-height: 52px;
+            font-size: 1.1rem;
+            border-radius: var(--radius-lg);
+        }
+
+        .search-wrapper .btn {
+            min-width: 52px;
+            border-radius: var(--radius-lg);
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            overflow-x: auto;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-tab {
+            padding: 0.625rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            color: var(--text-secondary);
+        }
+
+        .category-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Product Grid */
+        .pos-products {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            align-content: start;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .product-item {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 1rem 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            border: 2px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-height: 100px;
+        }
+
+        .product-item:active {
+            transform: scale(0.95);
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .product-item-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+            flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: var(--text-primary);
+        }
+
+        .product-item-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .product-item-stock {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .product-item-stock.low {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        /* Cart Sheet */
+        .cart-sheet {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            transition: var(--transition-normal);
+        }
+
+        .cart-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+        }
+
+        .cart-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-text {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .cart-total {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .cart-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .cart-sheet.expanded .cart-details {
+            max-height: 40vh;
+        }
+
+        .cart-items-list {
+            max-height: 25vh;
+            overflow-y: auto;
+            padding: 0 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid var(--border);
+            gap: 0.75rem;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .cart-item-price {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cart-item-qty button {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .cart-item-qty button:active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .cart-item-qty span {
+            min-width: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .cart-item-subtotal {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .cart-item-remove {
+            color: var(--danger);
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+
+        .cart-actions {
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-actions .btn {
+            flex: 1;
+            min-height: 54px;
+            font-size: 1.1rem;
+        }
+
+        /* FAB Camera Button */
+        .fab-camera {
+            position: fixed;
+            bottom: 180px;
+            right: 1.25rem;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-fast);
+        }
+
+        .fab-camera:active {
+            transform: scale(0.9);
+        }
+
+        .fab-camera.active {
+            background: var(--danger);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: flex;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 0.5rem 0;
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            flex-shrink: 0;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.625rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: var(--transition-fast);
+        }
+
+        .bottom-nav-item i {
+            font-size: 1.375rem;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--primary);
+        }
+
+        /* Scanner Modal */
+        .scanner-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .scanner-modal.active {
+            display: flex;
+        }
+
+        .scanner-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .scanner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .scanner-header h3 {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .scanner-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .scanner-body {
+            aspect-ratio: 1;
+            background: #000;
+        }
+
+        .scanner-body video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Empty State */
+        .empty-products {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-products i {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        .empty-products p {
+            margin-bottom: 1rem;
+        }
+
+        /* Desktop adjustments */
+        @media (min-width: 768px) {
+            .pos-products {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .pos-products {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .fab-camera {
+                bottom: 200px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Mobile Menu Toggle -->
-    <button class="menu-toggle" id="menuToggle">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <div class="app-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <span class="sidebar-logo">🐾</span>
-                <span class="sidebar-title">Pet Store POS</span>
+    <div class="mobile-pos">
+        <!-- Header -->
+        <header class="pos-header">
+            <h1>🐾 Pet Store</h1>
+            <div class="pos-stats" id="todayStats">
+                <div class="pos-stat">
+                    <div class="pos-stat-value" id="orderCount">0</div>
+                    <div class="pos-stat-label">Đơn</div>
+                </div>
+                <div class="pos-stat">
+                    <div class="pos-stat-value" id="todayRevenue">0đ</div>
+                    <div class="pos-stat-label">Doanh thu</div>
+                </div>
             </div>
+        </header>
 
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="pos.html" class="nav-link active">
-                        <i class="fas fa-cash-register"></i>
-                        <span>Bán hàng</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="products.html" class="nav-link">
-                        <i class="fas fa-box"></i>
-                        <span>Sản phẩm</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="history.html" class="nav-link">
-                        <i class="fas fa-history"></i>
-                        <span>Lịch sử</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="settings.html" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài đặt</span>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="sidebar-footer"
-                style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);">
-                <button class="btn btn-outline" style="width: 100%;" id="backupBtn">
-                    <i class="fas fa-download"></i> Backup
+        <!-- Search -->
+        <div class="pos-search">
+            <div class="search-wrapper">
+                <input type="text" class="form-control" id="barcodeInput" placeholder="🔍 Tìm sản phẩm hoặc mã vạch..."
+                    autocomplete="off">
+                <button class="btn btn-primary" id="searchBtn">
+                    <i class="fas fa-search"></i>
                 </button>
             </div>
-        </aside>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="page-header">
-                <h1 class="page-title">
-                    <i class="fas fa-cash-register" style="color: var(--primary);"></i>
-                    Bán hàng
-                </h1>
-                <div class="stats-mini" id="todayStats" style="display: flex; gap: 1.5rem;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--success);">0</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Đơn hôm nay</div>
+        <!-- Category Tabs -->
+        <div class="category-tabs" id="categoryTabs">
+            <button class="category-tab active" data-category="">Tất cả</button>
+            <!-- Categories loaded dynamically -->
+        </div>
+
+        <!-- Products Grid -->
+        <div class="pos-products" id="productGrid">
+            <div class="empty-products">
+                <i class="fas fa-box-open"></i>
+                <p>Chưa có sản phẩm</p>
+                <a href="products.html" class="btn btn-primary">Thêm sản phẩm</a>
+            </div>
+        </div>
+
+        <!-- FAB Camera Button -->
+        <button class="fab-camera" id="fabCamera" title="Quét mã vạch">
+            <i class="fas fa-camera"></i>
+        </button>
+
+        <!-- Cart Sheet -->
+        <div class="cart-sheet" id="cartSheet">
+            <div class="cart-summary" id="cartSummary">
+                <div class="cart-info">
+                    <div class="cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" id="cartCount">0</span>
                     </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="todayRevenue">0đ
-                        </div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Doanh thu</div>
-                    </div>
+                    <span class="cart-text">Giỏ hàng</span>
                 </div>
+                <div class="cart-total" id="cartTotal">0đ</div>
             </div>
 
-            <div class="pos-layout">
-                <!-- Scanner & Products Section -->
-                <div class="scanner-section">
-                    <!-- Barcode Scanner -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-barcode"></i> Quét mã vạch
-                            </h3>
-                            <button class="btn btn-primary" id="toggleScannerBtn">
-                                <i class="fas fa-camera"></i> Bật Camera
-                            </button>
-                        </div>
-
-                        <div class="scanner-box" id="scannerBox">
-                            <div id="scanner" style="width: 100%;"></div>
-                            <div class="scanner-placeholder" id="scannerPlaceholder">
-                                <i class="fas fa-qrcode"></i>
-                                <p>Nhấn "Bật Camera" để quét mã vạch</p>
-                                <p class="text-muted" style="font-size: 0.875rem;">hoặc nhập mã bên dưới</p>
-                            </div>
-                        </div>
-
-                        <!-- Manual Input -->
-                        <div class="input-group mt-1">
-                            <input type="text" class="form-control" id="barcodeInput"
-                                placeholder="Nhập mã vạch hoặc tên sản phẩm..." autocomplete="off">
-                            <button class="btn btn-primary" id="searchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Quick Products -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-bolt"></i> Sản phẩm
-                            </h3>
-                            <select class="form-control" style="width: auto;" id="categoryFilter">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="product-grid" id="productGrid">
-                            <!-- Products will be loaded here -->
-                            <div class="empty-state" style="grid-column: 1/-1;">
-                                <i class="fas fa-box-open"></i>
-                                <h3>Chưa có sản phẩm</h3>
-                                <p>Thêm sản phẩm trong mục <a href="products.html">Sản phẩm</a></p>
-                            </div>
-                        </div>
-                    </div>
+            <div class="cart-details">
+                <div class="cart-items-list" id="cartItems">
+                    <!-- Cart items here -->
                 </div>
-
-                <!-- Cart Section -->
-                <div class="cart-section">
-                    <div class="cart-header">
-                        <h3>
-                            <i class="fas fa-shopping-cart"></i>
-                            Giỏ hàng
-                            <span class="badge badge-primary" id="cartCount">0</span>
-                        </h3>
-                        <button class="btn btn-outline" id="clearCartBtn" style="padding: 0.5rem;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-
-                    <div class="cart-items" id="cartItems">
-                        <div class="cart-empty" id="cartEmpty">
-                            <i class="fas fa-shopping-basket"></i>
-                            <p>Giỏ hàng trống</p>
-                            <p class="text-muted" style="font-size: 0.875rem;">Quét mã vạch hoặc chọn sản phẩm</p>
-                        </div>
-                    </div>
-
-                    <div class="cart-footer">
-                        <div class="cart-total">
-                            <span class="cart-total-label">Tổng cộng:</span>
-                            <span class="cart-total-value" id="cartTotal">0đ</span>
-                        </div>
-                        <button class="btn btn-success btn-lg" style="width: 100%;" id="checkoutBtn" disabled>
-                            <i class="fas fa-check-circle"></i>
-                            Thanh toán
-                        </button>
-                    </div>
+                <div class="cart-actions">
+                    <button class="btn btn-outline" id="clearCartBtn">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+                    <button class="btn btn-success" id="checkoutBtn" disabled>
+                        <i class="fas fa-check-circle"></i> Thanh toán
+                    </button>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="pos.html" class="bottom-nav-item active">
+                <i class="fas fa-cash-register"></i>
+                <span>Bán hàng</span>
+            </a>
+            <a href="products.html" class="bottom-nav-item">
+                <i class="fas fa-box"></i>
+                <span>Sản phẩm</span>
+            </a>
+            <a href="history.html" class="bottom-nav-item">
+                <i class="fas fa-history"></i>
+                <span>Lịch sử</span>
+            </a>
+            <a href="settings.html" class="bottom-nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Cài đặt</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Scanner Modal -->
+    <div class="scanner-modal" id="scannerModal">
+        <div class="scanner-container">
+            <div class="scanner-header">
+                <h3><i class="fas fa-barcode"></i> Quét mã vạch</h3>
+                <button class="scanner-close" id="closeScannerBtn">&times;</button>
+            </div>
+            <div class="scanner-body">
+                <div id="scanner"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Receipt Modal -->
@@ -222,6 +665,50 @@
             navigator.serviceWorker.register('service-worker.js')
                 .then(reg => console.log('Service Worker registered'))
                 .catch(err => console.log('Service Worker registration failed:', err));
+        }
+
+        // Cart Sheet Toggle
+        const cartSheet = document.getElementById('cartSheet');
+        const cartSummary = document.getElementById('cartSummary');
+        cartSummary.addEventListener('click', () => {
+            cartSheet.classList.toggle('expanded');
+        });
+
+        // FAB Camera Button
+        const fabCamera = document.getElementById('fabCamera');
+        const scannerModal = document.getElementById('scannerModal');
+        const closeScannerBtn = document.getElementById('closeScannerBtn');
+
+        fabCamera.addEventListener('click', () => {
+            scannerModal.classList.add('active');
+            startScanner();
+            fabCamera.classList.add('active');
+        });
+
+        closeScannerBtn.addEventListener('click', () => {
+            scannerModal.classList.remove('active');
+            stopScanner();
+            fabCamera.classList.remove('active');
+        });
+
+        // Category Tabs
+        document.getElementById('categoryTabs').addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-tab')) {
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                filterProducts(e.target.dataset.category);
+            }
+        });
+
+        function filterProducts(category) {
+            window.selectedCategory = category;
+            if (typeof renderProducts === 'function' && typeof products !== 'undefined') {
+                if (category) {
+                    renderProducts(products.filter(p => p.category === category));
+                } else {
+                    renderProducts(products);
+                }
+            }
         }
     </script>
 </body>
