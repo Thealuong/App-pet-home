@@ -169,13 +169,8 @@ function onScanSuccess(decodedText) {
     // Handle the scanned barcode
     handleBarcodeSearch(decodedText);
 
-    // Brief pause to prevent multiple scans
-    if (scanner) {
-        scanner.pause();
-        setTimeout(() => {
-            if (isScanning) scanner.resume();
-        }, 1500);
-    }
+    // Stop scanner after successful scan (scan only once)
+    stopScanner();
 }
 
 function onScanError(error) {
