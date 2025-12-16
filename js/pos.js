@@ -446,6 +446,18 @@ async function checkout() {
 function generateReceipt(order) {
     const date = new Date(order.createdAt);
 
+    // VietQR bank info
+    const bankInfo = {
+        bankCode: '970418', // BIDV bank code
+        accountNumber: '8816992182',
+        accountName: 'LUONG THE ANH',
+        template: 'compact2'
+    };
+
+    // Generate VietQR URL
+    const transferContent = `${order.orderNumber} Pet Store`;
+    const vietQRUrl = `https://img.vietqr.io/image/${bankInfo.bankCode}-${bankInfo.accountNumber}-${bankInfo.template}.png?amount=${order.total}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
+
     elements.receiptContent.innerHTML = `
         <div class="receipt">
             <div class="receipt-header">
@@ -468,6 +480,15 @@ function generateReceipt(order) {
             <div class="receipt-total">
                 <span>TỔNG CỘNG</span>
                 <span>${formatCurrency(order.total)}</span>
+            </div>
+
+            <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+                <p style="font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">📱 Quét mã để thanh toán</p>
+                <img src="${vietQRUrl}" alt="VietQR" style="max-width: 200px; border-radius: 0.5rem; background: white; padding: 0.5rem;">
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    ${bankInfo.accountName}<br>
+                    ${bankInfo.accountNumber} - BIDV
+                </p>
             </div>
             
             <div class="receipt-footer">
