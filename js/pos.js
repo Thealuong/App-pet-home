@@ -407,41 +407,241 @@ async function checkout() {
 
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Create order
-    const order = {
-        items: cart.map(item => ({
-            productId: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            subtotal: item.price * item.quantity
-        })),
-        total: total
-    };
+    // Show payment method selection
+    elements.receiptContent.innerHTML = `
+        <div class="receipt" style="text-align: center;">
+            <div class="receipt-header">
+                <div class="receipt-title">🐾 THANH TOÁN</div>
+                <div style="font-size: 1.5rem; font-weight: bold; margin-top: 1rem; color: var(--success);">
+                    ${formatCurrency(total)}
+                </div>
+            </div>
+            
+            <p style="margin: 1.5rem 0; color: var(--text-muted);">Chọn phương thức thanh toán:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <button class="btn btn-success" style="padding: 1rem; font-size: 1rem;" onclick="processCashPayment()">
+                    <i class="fas fa-money-bill-wave"></i> Tiền mặt
+                </button>
+                <button class="btn btn-primary" style="padding: 1rem; font-size: 1rem;" onclick="processBankTransfer()">
+                    <i class="fas fa-qrcode"></i> Chuyển khoản (QR)
+                </button>
+                <button class="btn btn-outline" onclick="closeReceiptModal()">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </button>
+            </div>
+        </div>
+    `;
 
+    // Store cart total for later use
+    window.pendingTotal = total;
+    window.pendingCartItems = [...cart];
+
+    elements.receiptModal.classList.add('active');
+}
+
+// Process cash payment
+async function processCashPayment() {
+    const total = window.pendingTotal;
+
+    elements.receiptContent.innerHTML = `
+        <div class="receipt" style="text-align: center;">
+            <div class="receipt-header">
+                <div class="receipt-title">💵 TIỀN MẶT</div>
+                <div style="font-size: 1.25rem; font-weight: bold; margin-top: 0.5rem;">
+                    Tổng tiền: ${formatCurrency(total)}
+                </div>
+            </div>
+            
+            <div style="margin: 1.5rem 0;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Tiền khách đưa:</label>
+                <input type="number" id="cashReceived" class="form-control" style="text-align: center; font-size: 1.25rem; font-weight: bold;" 
+                    placeholder="Nhập số tiền" oninput="calculateChange()">
+                <div id="changeDisplay" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem; display: none;">
+                    <span style="color: var(--text-muted);">Tiền thừa:</span>
+                    <div id="changeAmount" style="font-size: 1.5rem; font-weight: bold; color: var(--success);"></div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-outline" style="flex: 1;" onclick="checkout()">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </button>
+                <button class="btn btn-success" style="flex: 1;" id="confirmCashBtn" disabled onclick="confirmCashPayment()">
+                    <i class="fas fa-check"></i> Xác nhận
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('cashReceived').focus();
+}
+
+function calculateChange() {
+    const total = window.pendingTotal;
+    const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+    const change = received - total;
+
+    const changeDisplay = document.getElementById('changeDisplay');
+    const changeAmount = document.getElementById('changeAmount');
+    const confirmBtn = document.getElementById('confirmCashBtn');
+
+    if (received >= total) {
+        changeDisplay.style.display = 'block';
+        changeAmount.textContent = formatCurrency(change);
+        confirmBtn.disabled = false;
+    } else {
+        changeDisplay.style.display = 'none';
+        confirmBtn.disabled = true;
+    }
+}
+
+async function confirmCashPayment() {
     try {
+        const total = window.pendingTotal;
+        const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+        const change = received - total;
+
+        // Create order
+        const order = {
+            items: window.pendingCartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity
+            })),
+            total: total,
+            paymentMethod: 'cash',
+            cashReceived: received,
+            change: change,
+            status: 'paid',
+            paidAt: new Date().toISOString()
+        };
+
         const savedOrder = await db.addOrder(order);
 
-        // Generate receipt
-        generateReceipt(savedOrder);
+        // Deduct stock
+        for (const item of order.items) {
+            const product = await db.getProduct(item.productId);
+            if (product && product.stock !== undefined) {
+                product.stock = Math.max(0, product.stock - item.quantity);
+                await db.updateProduct(product);
+            }
+        }
+
+        // Clear cart
+        cart = [];
+        saveCartToStorage();
+        updateCart();
+        await loadProducts();
+        await updateTodayStats();
+
+        // Show success receipt
+        generateCashReceipt(savedOrder);
+
+        showToast(`✅ Đã thanh toán ${savedOrder.orderNumber}`, 'success');
+    } catch (error) {
+        console.error('Cash payment error:', error);
+        showToast('Lỗi thanh toán: ' + error.message, 'error');
+    }
+}
+
+function generateCashReceipt(order) {
+    const date = new Date(order.createdAt);
+
+    elements.receiptContent.innerHTML = `
+        <div class="receipt">
+            <div class="receipt-header">
+                <div class="receipt-title">🐾 PET STORE</div>
+                <div style="font-size: 0.75rem; margin-top: 0.5rem;">
+                    ${order.orderNumber}<br>
+                    ${date.toLocaleDateString('vi-VN')} ${date.toLocaleTimeString('vi-VN')}
+                </div>
+            </div>
+            
+            <div class="receipt-items">
+                ${order.items.map(item => `
+                    <div class="receipt-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>${formatCurrency(item.subtotal)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="receipt-total">
+                <span>TỔNG CỘNG</span>
+                <span>${formatCurrency(order.total)}</span>
+            </div>
+            
+            <div style="padding: 0.75rem 0; border-top: 1px dashed var(--border); margin-top: 0.5rem;">
+                <div class="receipt-item">
+                    <span>💵 Tiền khách đưa</span>
+                    <span>${formatCurrency(order.cashReceived)}</span>
+                </div>
+                <div class="receipt-item" style="font-weight: bold; color: var(--success);">
+                    <span>💰 Tiền thừa</span>
+                    <span>${formatCurrency(order.change)}</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; padding: 0.5rem; background: var(--success); color: white; border-radius: 0.5rem; margin-top: 0.5rem;">
+                ✅ ĐÃ THANH TOÁN
+            </div>
+            
+            <div class="receipt-footer">
+                Cảm ơn quý khách!<br>
+                Hẹn gặp lại 🐕🐈
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="startNewOrder()">
+                <i class="fas fa-plus"></i> Đơn hàng mới
+            </button>
+        </div>
+    `;
+}
+
+// Process bank transfer
+async function processBankTransfer() {
+    try {
+        const total = window.pendingTotal;
+
+        // Create order
+        const order = {
+            items: window.pendingCartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity
+            })),
+            total: total,
+            paymentMethod: 'bank_transfer',
+            status: 'pending'
+        };
+
+        const savedOrder = await db.addOrder(order);
 
         // Clear cart
         cart = [];
         saveCartToStorage();
         updateCart();
 
-        // Update stats
-        await updateTodayStats();
-
-        // Show receipt modal
-        elements.receiptModal.classList.add('active');
+        // Generate receipt with QR
+        generateReceipt(savedOrder);
 
         showToast(`Đã tạo đơn hàng ${savedOrder.orderNumber}`, 'success');
     } catch (error) {
-        console.error('Checkout error:', error);
+        console.error('Bank transfer error:', error);
         showToast('Lỗi tạo đơn hàng: ' + error.message, 'error');
     }
 }
+
+// Make functions globally accessible
+window.processCashPayment = processCashPayment;
+window.processBankTransfer = processBankTransfer;
+window.calculateChange = calculateChange;
+window.confirmCashPayment = confirmCashPayment;
 
 function generateReceipt(order) {
     const date = new Date(order.createdAt);
