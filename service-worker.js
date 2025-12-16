@@ -1,20 +1,20 @@
-const CACHE_NAME = 'petstore-pos-v1';
+const CACHE_NAME = 'petstore-pos-v2';
 const ASSETS_TO_CACHE = [
-    '/App_pet_home/',
-    '/App_pet_home/index.html',
-    '/App_pet_home/pos.html',
-    '/App_pet_home/products.html',
-    '/App_pet_home/history.html',
-    '/App_pet_home/settings.html',
-    '/App_pet_home/css/style.css',
-    '/App_pet_home/js/database.js',
-    '/App_pet_home/js/pos.js',
-    '/App_pet_home/js/products.js',
-    '/App_pet_home/js/history.js',
-    '/App_pet_home/js/settings.js',
-    '/App_pet_home/manifest.json',
-    '/App_pet_home/icons/icon-192.png',
-    '/App_pet_home/icons/icon-512.png'
+    './',
+    './index.html',
+    './pos.html',
+    './products.html',
+    './history.html',
+    './settings.html',
+    './css/style.css',
+    './js/database.js',
+    './js/pos.js',
+    './js/products.js',
+    './js/history.js',
+    './js/settings.js',
+    './manifest.json',
+    './icons/icon-192.png',
+    './icons/icon-512.png'
 ];
 
 // Install event - cache assets
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
                     .catch(() => {
                         // Return offline fallback for HTML pages
                         if (event.request.headers.get('accept').includes('text/html')) {
-                            return caches.match('/App_pet_home/pos.html');
+                            return caches.match('./pos.html');
                         }
                     });
             })

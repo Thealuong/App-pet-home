@@ -2,7 +2,7 @@
     "name": "Pet Store POS",
     "short_name": "PetPOS",
     "description": "Hệ thống quản lý bán hàng cho cửa hàng thú cưng",
-    "start_url": "/App_pet_home/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#1e293b",
     "theme_color": "#6366f1",
@@ -21,6 +21,9 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": ["business", "utilities"],
+    "categories": [
+        "business",
+        "utilities"
+    ],
     "lang": "vi"
 }
