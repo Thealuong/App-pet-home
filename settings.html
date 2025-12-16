@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt | Pet Store</title>
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo">🐾</span>
+                <span class="sidebar-title">Pet Store POS</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="pos.html" class="nav-link">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Bán hàng</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="products.html" class="nav-link">
+                        <i class="fas fa-box"></i>
+                        <span>Sản phẩm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="history.html" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>Lịch sử</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html" class="nav-link active">
+                        <i class="fas fa-cog"></i>
+                        <span>Cài đặt</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-cog" style="color: var(--primary);"></i>
+                    Cài đặt
+                </h1>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="card mb-2">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-database"></i> Sao lưu & Phục hồi dữ liệu
+                    </h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: var(--bg-input); padding: 1.5rem; border-radius: 0.75rem;">
+                        <h4 style="margin-bottom: 0.5rem;">📥 Sao lưu (Backup)</h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">
+                            Tải xuống file backup chứa tất cả sản phẩm, đơn hàng và danh mục.
+                        </p>
+                        <button class="btn btn-primary" id="backupBtn">
+                            <i class="fas fa-download"></i> Tải file backup
+                        </button>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 1.5rem; border-radius: 0.75rem;">
+                        <h4 style="margin-bottom: 0.5rem;">📤 Phục hồi (Restore)</h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">
+                            Nhập file backup để khôi phục dữ liệu. <span class="text-warning">⚠️ Dữ liệu hiện tại sẽ bị
+                                thay thế!</span>
+                        </p>
+                        <input type="file" id="restoreFile" accept=".json" style="display: none;">
+                        <button class="btn btn-outline" id="restoreBtn">
+                            <i class="fas fa-upload"></i> Chọn file phục hồi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Statistics -->
+            <div class="card mb-2">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-pie"></i> Thống kê dữ liệu
+                    </h3>
+                </div>
+                <div class="stats-grid" style="margin: 0;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalProducts">0</div>
+                        <div class="stat-label">Sản phẩm</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalOrders">0</div>
+                        <div class="stat-label">Đơn hàng</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalCategories">0</div>
+                        <div class="stat-label">Danh mục</div>
+                    </div>
+                    <div class="stat-card primary">
+                        <div class="stat-value" id="totalRevenue">0đ</div>
+                        <div class="stat-label">Tổng doanh thu</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card" style="border-color: var(--danger);">
+                <div class="card-header">
+                    <h3 class="card-title text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Vùng nguy hiểm
+                    </h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center;">
+                    <div>
+                        <h4>Xóa tất cả dữ liệu</h4>
+                        <p class="text-muted" style="font-size: 0.875rem;">
+                            Xóa vĩnh viễn tất cả sản phẩm, đơn hàng, và danh mục. Hành động này không thể hoàn tác!
+                        </p>
+                    </div>
+                    <button class="btn btn-danger" id="clearAllBtn">
+                        <i class="fas fa-trash-alt"></i> Xóa tất cả
+                    </button>
+                </div>
+            </div>
+
+            <!-- App Info -->
+            <div style="text-align: center; margin-top: 2rem; color: var(--text-muted);">
+                <p>🐾 Pet Store POS v1.0</p>
+                <p style="font-size: 0.75rem;">Made with ❤️ for pet lovers</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/database.js"></script>
+    <script src="js/settings.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm | Pet Store</title>
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo">🐾</span>
+                <span class="sidebar-title">Pet Store POS</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="pos.html" class="nav-link">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Bán hàng</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="products.html" class="nav-link active">
+                        <i class="fas fa-box"></i>
+                        <span>Sản phẩm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="history.html" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>Lịch sử</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Cài đặt</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-box" style="color: var(--primary);"></i>
+                    Quản lý sản phẩm
+                </h1>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-outline" id="importBtn">
+                        <i class="fas fa-file-import"></i> Nhập Excel
+                    </button>
+                    <button class="btn btn-primary" id="addProductBtn">
+                        <i class="fas fa-plus"></i> Thêm sản phẩm
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-label">Tổng sản phẩm</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📂</div>
+                    <div class="stat-value" id="totalCategories">0</div>
+                    <div class="stat-label">Danh mục</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value text-warning" id="lowStockCount">0</div>
+                    <div class="stat-label">Sắp hết hàng</div>
+                </div>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="card mb-2">
+                <div class="d-flex gap-1" style="flex-wrap: wrap;">
+                    <div class="search-input flex-1" style="min-width: 200px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Tìm theo tên, mã vạch...">
+                    </div>
+                    <select class="form-control" id="categoryFilter" style="width: auto; min-width: 150px;">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã vạch</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Giá bán</th>
+                                <th>Tồn kho</th>
+                                <th style="width: 100px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTable">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Thêm sản phẩm</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="productForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Mã vạch *</label>
+                        <input type="text" class="form-control" id="barcode" required
+                            placeholder="Quét hoặc nhập mã vạch">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tên sản phẩm *</label>
+                        <input type="text" class="form-control" id="name" required
+                            placeholder="VD: Thức ăn chó Pedigree 1.5kg">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Danh mục</label>
+                        <div class="input-group">
+                            <select class="form-control" id="category">
+                                <option value="">-- Chọn danh mục --</option>
+                            </select>
+                            <button type="button" class="btn btn-outline" id="addCategoryBtn" title="Thêm danh mục mới">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Giá bán *</label>
+                            <input type="number" class="form-control" id="price" required min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Giá nhập</label>
+                            <input type="number" class="form-control" id="cost" min="0" placeholder="0">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Số lượng tồn</label>
+                            <input type="number" class="form-control" id="stock" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Đơn vị</label>
+                            <input type="text" class="form-control" id="unit" placeholder="cái, gói, kg...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelBtn">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Nhập từ Excel/CSV</h3>
+                <button class="modal-close" id="closeImportBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Chọn file Excel (.xlsx) hoặc CSV</label>
+                    <input type="file" class="form-control" id="importFile" accept=".xlsx,.xls,.csv">
+                </div>
+                <div style="background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; font-size: 0.875rem;">
+                    <strong>Định dạng file:</strong>
+                    <p class="text-muted mt-1">Cột theo thứ tự: Mã vạch | Tên | Danh mục | Giá bán | Giá nhập | Tồn kho
+                        | Đơn vị</p>
+                    <button type="button" class="btn btn-outline mt-1" id="downloadTemplateBtn">
+                        <i class="fas fa-download"></i> Tải file mẫu
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelImportBtn">Hủy</button>
+                <button class="btn btn-primary" id="processImportBtn">
+                    <i class="fas fa-upload"></i> Nhập dữ liệu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/products.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Bán hàng | Pet Store</title>
+    <meta name="description" content="Hệ thống bán hàng cho cửa hàng thú cưng">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo">🐾</span>
+                <span class="sidebar-title">Pet Store POS</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="pos.html" class="nav-link active">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Bán hàng</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="products.html" class="nav-link">
+                        <i class="fas fa-box"></i>
+                        <span>Sản phẩm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="history.html" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>Lịch sử</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Cài đặt</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer"
+                style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <button class="btn btn-outline" style="width: 100%;" id="backupBtn">
+                    <i class="fas fa-download"></i> Backup
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-cash-register" style="color: var(--primary);"></i>
+                    Bán hàng
+                </h1>
+                <div class="stats-mini" id="todayStats" style="display: flex; gap: 1.5rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--success);">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Đơn hôm nay</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="todayRevenue">0đ
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Doanh thu</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pos-layout">
+                <!-- Scanner & Products Section -->
+                <div class="scanner-section">
+                    <!-- Barcode Scanner -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-barcode"></i> Quét mã vạch
+                            </h3>
+                            <button class="btn btn-primary" id="toggleScannerBtn">
+                                <i class="fas fa-camera"></i> Bật Camera
+                            </button>
+                        </div>
+
+                        <div class="scanner-box" id="scannerBox">
+                            <div id="scanner" style="width: 100%;"></div>
+                            <div class="scanner-placeholder" id="scannerPlaceholder">
+                                <i class="fas fa-qrcode"></i>
+                                <p>Nhấn "Bật Camera" để quét mã vạch</p>
+                                <p class="text-muted" style="font-size: 0.875rem;">hoặc nhập mã bên dưới</p>
+                            </div>
+                        </div>
+
+                        <!-- Manual Input -->
+                        <div class="input-group mt-1">
+                            <input type="text" class="form-control" id="barcodeInput"
+                                placeholder="Nhập mã vạch hoặc tên sản phẩm..." autocomplete="off">
+                            <button class="btn btn-primary" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Products -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-bolt"></i> Sản phẩm
+                            </h3>
+                            <select class="form-control" style="width: auto;" id="categoryFilter">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="product-grid" id="productGrid">
+                            <!-- Products will be loaded here -->
+                            <div class="empty-state" style="grid-column: 1/-1;">
+                                <i class="fas fa-box-open"></i>
+                                <h3>Chưa có sản phẩm</h3>
+                                <p>Thêm sản phẩm trong mục <a href="products.html">Sản phẩm</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Section -->
+                <div class="cart-section">
+                    <div class="cart-header">
+                        <h3>
+                            <i class="fas fa-shopping-cart"></i>
+                            Giỏ hàng
+                            <span class="badge badge-primary" id="cartCount">0</span>
+                        </h3>
+                        <button class="btn btn-outline" id="clearCartBtn" style="padding: 0.5rem;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
+                    <div class="cart-items" id="cartItems">
+                        <div class="cart-empty" id="cartEmpty">
+                            <i class="fas fa-shopping-basket"></i>
+                            <p>Giỏ hàng trống</p>
+                            <p class="text-muted" style="font-size: 0.875rem;">Quét mã vạch hoặc chọn sản phẩm</p>
+                        </div>
+                    </div>
+
+                    <div class="cart-footer">
+                        <div class="cart-total">
+                            <span class="cart-total-label">Tổng cộng:</span>
+                            <span class="cart-total-value" id="cartTotal">0đ</span>
+                        </div>
+                        <button class="btn btn-success btn-lg" style="width: 100%;" id="checkoutBtn" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            Thanh toán
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🧾 Hóa đơn</h3>
+                <button class="modal-close" id="closeReceiptBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Receipt will be generated here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="printReceiptBtn">
+                    <i class="fas fa-print"></i> In
+                </button>
+                <button class="btn btn-primary" id="newOrderBtn">
+                    <i class="fas fa-plus"></i> Đơn mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="js/database.js"></script>
+    <script src="js/pos.js"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+
+</html>

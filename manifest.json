@@ -1,0 +1,26 @@
+{
+    "name": "Pet Store POS",
+    "short_name": "PetPOS",
+    "description": "Hệ thống quản lý bán hàng cho cửa hàng thú cưng",
+    "start_url": "/App_pet_home/",
+    "display": "standalone",
+    "background_color": "#1e293b",
+    "theme_color": "#6366f1",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["business", "utilities"],
+    "lang": "vi"
+}
