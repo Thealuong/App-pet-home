@@ -31,8 +31,16 @@ const elements = {
     importFile: document.getElementById('importFile'),
     processImportBtn: document.getElementById('processImportBtn'),
     downloadTemplateBtn: document.getElementById('downloadTemplateBtn'),
-    toastContainer: document.getElementById('toastContainer')
+    toastContainer: document.getElementById('toastContainer'),
+    // Barcode scanner elements
+    scanBarcodeBtn: document.getElementById('scanBarcodeBtn'),
+    closeScannerBtn: document.getElementById('closeScannerBtn'),
+    barcodeScannerContainer: document.getElementById('barcodeScannerContainer'),
+    barcodeScanner: document.getElementById('barcodeScanner')
 };
+
+// Barcode scanner instance
+let html5QrCode = null;
 
 // ==================== INITIALIZATION ====================
 
@@ -91,6 +99,10 @@ function setupEventListeners() {
     });
     elements.processImportBtn?.addEventListener('click', processImport);
     elements.downloadTemplateBtn?.addEventListener('click', downloadTemplate);
+
+    // Barcode Scanner
+    elements.scanBarcodeBtn?.addEventListener('click', startBarcodeScanner);
+    elements.closeScannerBtn?.addEventListener('click', stopBarcodeScanner);
 }
 
 // ==================== PRODUCTS CRUD ====================
@@ -211,7 +223,10 @@ function openProductModal(product = null) {
     document.getElementById('barcode').focus();
 }
 
+
 function closeProductModal() {
+    // Stop scanner if running
+    stopBarcodeScanner();
     elements.productModal.classList.remove('active');
     editingProductId = null;
 }
@@ -292,6 +307,53 @@ async function handleAddCategory() {
     } catch (error) {
         showToast('Lỗi: ' + error.message, 'error');
     }
+}
+
+// ==================== BARCODE SCANNER ====================
+
+function startBarcodeScanner() {
+    elements.barcodeScannerContainer.style.display = 'block';
+    elements.scanBarcodeBtn.disabled = true;
+
+    html5QrCode = new Html5Qrcode("barcodeScanner");
+
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 100 },
+        aspectRatio: 1.5
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+            // Successfully scanned
+            document.getElementById('barcode').value = decodedText;
+            showToast('Đã quét: ' + decodedText, 'success');
+            stopBarcodeScanner();
+            // Focus on next field
+            document.getElementById('name').focus();
+        },
+        (errorMessage) => {
+            // Scan error - ignore, keep scanning
+        }
+    ).catch((err) => {
+        showToast('Không thể mở camera: ' + err, 'error');
+        stopBarcodeScanner();
+    });
+}
+
+function stopBarcodeScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            html5QrCode = null;
+        }).catch((err) => {
+            console.log('Stop error:', err);
+        });
+    }
+    elements.barcodeScannerContainer.style.display = 'none';
+    elements.scanBarcodeBtn.disabled = false;
 }
 
 // ==================== IMPORT/EXPORT ====================

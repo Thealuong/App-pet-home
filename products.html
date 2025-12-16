@@ -18,6 +18,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -145,8 +149,21 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">Mã vạch *</label>
-                        <input type="text" class="form-control" id="barcode" required
-                            placeholder="Quét hoặc nhập mã vạch">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="barcode" required placeholder="Nhập mã vạch">
+                            <button type="button" class="btn btn-primary" id="scanBarcodeBtn">
+                                <i class="fas fa-camera"></i> Quét
+                            </button>
+                        </div>
+                        <!-- Scanner Container -->
+                        <div id="barcodeScannerContainer" style="display: none; margin-top: 0.5rem;">
+                            <div id="barcodeScanner" style="width: 100%; border-radius: 0.5rem; overflow: hidden;">
+                            </div>
+                            <button type="button" class="btn btn-outline" id="closeScannerBtn"
+                                style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-times"></i> Đóng camera
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tên sản phẩm *</label>
