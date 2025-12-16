@@ -205,6 +205,17 @@ class Database {
         });
     }
 
+    async updateOrder(order) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['orders'], 'readwrite');
+            const store = transaction.objectStore('orders');
+
+            const request = store.put(order);
+            request.onsuccess = () => resolve(order);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async deleteOrder(id) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['orders'], 'readwrite');

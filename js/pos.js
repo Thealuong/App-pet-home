@@ -490,6 +490,15 @@ function generateReceipt(order) {
                     ${bankInfo.accountNumber} - BIDV
                 </p>
             </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+                <button class="btn btn-success" style="flex: 1;" onclick="confirmPayment('${order.id}')">
+                    <i class="fas fa-check"></i> Đã thanh toán
+                </button>
+                <button class="btn btn-outline" style="flex: 1; color: var(--danger); border-color: var(--danger);" onclick="cancelOrder('${order.id}')">
+                    <i class="fas fa-times"></i> Hủy đơn
+                </button>
+            </div>
             
             <div class="receipt-footer">
                 Cảm ơn quý khách!<br>
@@ -497,6 +506,9 @@ function generateReceipt(order) {
             </div>
         </div>
     `;
+
+    // Store current order for reference
+    window.currentOrder = order;
 }
 
 function closeReceiptModal() {
@@ -536,6 +548,74 @@ function startNewOrder() {
     closeReceiptModal();
     elements.barcodeInput.focus();
 }
+
+// ==================== PAYMENT CONFIRMATION ====================
+
+async function confirmPayment(orderId) {
+    try {
+        const order = window.currentOrder;
+        if (!order) {
+            showToast('Không tìm thấy đơn hàng', 'error');
+            return;
+        }
+
+        // Update order status to paid
+        order.status = 'paid';
+        order.paidAt = new Date().toISOString();
+        await db.updateOrder(order);
+
+        // Deduct stock for each item
+        for (const item of order.items) {
+            const product = await db.getProduct(item.productId);
+            if (product && product.stock !== undefined) {
+                product.stock = Math.max(0, product.stock - item.quantity);
+                await db.updateProduct(product);
+            }
+        }
+
+        // Reload products to update display
+        await loadProducts();
+
+        showToast(`✅ Đã xác nhận thanh toán ${order.orderNumber}`, 'success');
+        closeReceiptModal();
+
+        // Update stats
+        await updateTodayStats();
+    } catch (error) {
+        console.error('Confirm payment error:', error);
+        showToast('Lỗi xác nhận thanh toán: ' + error.message, 'error');
+    }
+}
+
+async function cancelOrder(orderId) {
+    if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+
+    try {
+        const order = window.currentOrder;
+        if (!order) {
+            showToast('Không tìm thấy đơn hàng', 'error');
+            return;
+        }
+
+        // Update order status to cancelled
+        order.status = 'cancelled';
+        order.cancelledAt = new Date().toISOString();
+        await db.updateOrder(order);
+
+        showToast(`❌ Đã hủy đơn ${order.orderNumber}`, 'warning');
+        closeReceiptModal();
+
+        // Update stats
+        await updateTodayStats();
+    } catch (error) {
+        console.error('Cancel order error:', error);
+        showToast('Lỗi hủy đơn hàng: ' + error.message, 'error');
+    }
+}
+
+// Make payment functions globally accessible
+window.confirmPayment = confirmPayment;
+window.cancelOrder = cancelOrder;
 
 // ==================== STATS ====================
 
